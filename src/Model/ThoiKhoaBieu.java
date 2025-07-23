@@ -7,10 +7,11 @@ public class ThoiKhoaBieu {
     private String tenLop;
     private String tenNguoiDung;
     private String tenMonHoc;
-    private Date ngay; // Đổi thành Date (từ sửa đổi trước)
+    private Date ngay; 
     private String tiet;
-    private String maPhongHoc; // Đổi từ tenPhongHoc thành maPhongHoc
+    private String maPhongHoc;
     private String tenHocKy;
+    private String ghichu; 
 
     // Constructor
     public ThoiKhoaBieu() {
@@ -79,5 +80,12 @@ public class ThoiKhoaBieu {
 
     public void setTenHocKy(String tenHocKy) {
         this.tenHocKy = tenHocKy;
+    }
+        public String getGhichu() {
+        return ghichu;
+    }
+
+    public void setGhichu(String ghichu) {
+        this.ghichu = ghichu;
     }
 }

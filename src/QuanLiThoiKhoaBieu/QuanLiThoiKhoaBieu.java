@@ -57,9 +57,9 @@ jDate.addPropertyChangeListener("date", evt -> filterTable2());
     }
     
     private void initTableModels() {
-        tableModel1 = new DefaultTableModel(
+  tableModel1 = new DefaultTableModel(
             new Object[][]{},
-            new String[]{"Lớp", "Giáo viên", "Môn học", "Phòng", "Ngày", "Tiết", "Học kỳ", "Mã TKB"}
+            new String[]{"Lớp", "Giáo viên", "Môn học", "Phòng", "Ngày", "Tiết", "Học kỳ", "Mã TKB", "Ghi chú"}
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -70,51 +70,53 @@ jDate.addPropertyChangeListener("date", evt -> filterTable2());
         
         tableModel2 = new DefaultTableModel(
             new Object[][]{},
-            new String[]{"Lớp", "Giáo viên", "Môn học", "Phòng", "Ngày", "Tiết", "Học kỳ", "Mã TKB"}
+            new String[]{"Lớp", "Giáo viên", "Môn học", "Phòng", "Ngày", "Tiết", "Học kỳ", "Mã TKB", "Ghi chú"}
         ) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
-        };
+        };  
         jTable2.setModel(tableModel2);
     }
     
 private void loadTableData() {
-    tableModel1.setRowCount(0);
-    List<ThoiKhoaBieu> tkbList = tkb.getAllThoiKhoaBieu();
-    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-    for (ThoiKhoaBieu tkb : tkbList) {
-        tableModel1.addRow(new Object[]{
-            tkb.getTenLop(),
-            tkb.getTenNguoiDung(),
-            tkb.getTenMonHoc(),
-            tkb.getMaPhongHoc(),
-            tkb.getNgay() != null ? sdf.format(tkb.getNgay()) : "",
-            tkb.getTiet(),
-            tkb.getTenHocKy(),
-            tkb.getMaTKB()
-        });
+        tableModel1.setRowCount(0);
+        List<ThoiKhoaBieu> tkbList = tkb.getAllThoiKhoaBieu();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        for (ThoiKhoaBieu tkb : tkbList) {
+            tableModel1.addRow(new Object[]{
+                tkb.getTenLop(),
+                tkb.getTenNguoiDung(),
+                tkb.getTenMonHoc(),
+                tkb.getMaPhongHoc(),
+                tkb.getNgay() != null ? sdf.format(tkb.getNgay()) : "",
+                tkb.getTiet(),
+                tkb.getTenHocKy(),
+                tkb.getMaTKB(),
+                tkb.getGhichu() != null ? tkb.getGhichu() : ""
+            });
+        }
     }
-}
 
-private void loadTableData2() {
-    tableModel2.setRowCount(0);
-    List<ThoiKhoaBieu> tkbList = tkb.getAllThoiKhoaBieu();
-    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-    for (ThoiKhoaBieu tkb : tkbList) {
-        tableModel2.addRow(new Object[]{
-            tkb.getTenLop(),
-            tkb.getTenNguoiDung(),
-            tkb.getTenMonHoc(),
-            tkb.getMaPhongHoc(),
-            tkb.getNgay() != null ? sdf.format(tkb.getNgay()) : "",
-            tkb.getTiet(),
-            tkb.getTenHocKy(),
-            tkb.getMaTKB()
-        });
+    private void loadTableData2() {
+        tableModel2.setRowCount(0);
+        List<ThoiKhoaBieu> tkbList = tkb.getAllThoiKhoaBieu();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        for (ThoiKhoaBieu tkb : tkbList) {
+            tableModel2.addRow(new Object[]{
+                tkb.getTenLop(),
+                tkb.getTenNguoiDung(),
+                tkb.getTenMonHoc(),
+                tkb.getMaPhongHoc(),
+                tkb.getNgay() != null ? sdf.format(tkb.getNgay()) : "",
+                tkb.getTiet(),
+                tkb.getTenHocKy(),
+                tkb.getMaTKB(),
+                tkb.getGhichu() != null ? tkb.getGhichu() : ""
+            });
+        }
     }
-}
     
     private void loadMonHoc() {
         cbbMon.removeAllItems();
@@ -349,17 +351,66 @@ private void loadLopHocHoc() {
     }
 
     // Kiểm tra ngày khi chọn từ currentDateChooser
-    private void validateSelectedDate() {
-        String nienKhoa = (String) cbbNamHoc.getSelectedItem();
-        Date selectedDate = currentDateChooser.getDate();
-        if (selectedDate != null && !isDateInNienKhoa(selectedDate, nienKhoa)) {
+private void validateSelectedDate() {
+    String nienKhoa = (String) cbbNamHoc.getSelectedItem();
+    Date selectedDate = currentDateChooser.getDate();
+
+    if (selectedDate == null || nienKhoa == null || "Chọn niên khóa".equals(nienKhoa)) {
+        return; // Không kiểm tra nếu chưa chọn ngày hoặc niên khóa
+    }
+
+    // Trích xuất năm từ niên khóa (ví dụ: "2022-2023" -> 2022 và 2023)
+    String[] years = nienKhoa.split("-");
+    if (years.length != 2) {
+        JOptionPane.showMessageDialog(this, 
+            "Niên khóa không đúng định dạng!", 
+            "Lỗi niên khóa", 
+            JOptionPane.ERROR_MESSAGE);
+        currentDateChooser.setDate(null);
+        return;
+    }
+
+    try {
+        int startYear = Integer.parseInt(years[0]);
+        int endYear = Integer.parseInt(years[1]);
+
+        // Tạo ngày bắt đầu (3/9 của năm đầu) và ngày kết thúc (30/5 của năm sau)
+        Calendar startDate = Calendar.getInstance();
+        startDate.set(startYear, Calendar.SEPTEMBER, 3, 0, 0, 0);
+        startDate.set(Calendar.MILLISECOND, 0);
+
+        Calendar endDate = Calendar.getInstance();
+        endDate.set(endYear, Calendar.MAY, 30, 23, 59, 59);
+        endDate.set(Calendar.MILLISECOND, 999);
+
+        // Lấy ngày được chọn
+        Calendar selectedCal = Calendar.getInstance();
+        selectedCal.setTime(selectedDate);
+        selectedCal.set(Calendar.HOUR_OF_DAY, 0);
+        selectedCal.set(Calendar.MINUTE, 0);
+        selectedCal.set(Calendar.SECOND, 0);
+        selectedCal.set(Calendar.MILLISECOND, 0);
+
+        // Kiểm tra ngày có nằm trong khoảng hợp lệ không
+        if (selectedCal.before(startDate) || selectedCal.after(endDate)) {
             JOptionPane.showMessageDialog(this, 
-                "Ngày được chọn không thuộc niên khóa " + nienKhoa + "!", 
+                "Ngày được chọn không thuộc niên khóa " + nienKhoa + "!\n" +
+                "Vui lòng chọn ngày từ 03/09/" + startYear + " đến 30/05/" + endYear, 
                 "Lỗi ngày", 
                 JOptionPane.ERROR_MESSAGE);
             currentDateChooser.setDate(null); // Xóa ngày không hợp lệ
+            jTextField7.setText(""); // Xóa text trong jTextField7
         }
+    } catch (NumberFormatException e) {
+        System.err.println("Lỗi khi phân tích niên khóa: " + e.getMessage());
+        JOptionPane.showMessageDialog(this, 
+            "Niên khóa không hợp lệ!", 
+            "Lỗi niên khóa", 
+            JOptionPane.ERROR_MESSAGE);
+        currentDateChooser.setDate(null);
+        jTextField7.setText("");
     }
+}
     
     private void filterTable2() {
     String tenLop = (String) cbbLopHoc.getSelectedItem();
@@ -559,6 +610,11 @@ private void loadLopHocHoc() {
         jLabel4.setText("Lớp:");
 
         cbbLopHoc.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cbbLopHoc.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbbLopHocActionPerformed(evt);
+            }
+        });
 
         ngày.setText("Ngày:");
 
@@ -624,42 +680,85 @@ private void loadLopHocHoc() {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-    String tenLop = (String) cbbLop.getSelectedItem();
+String tenLop = (String) cbbLop.getSelectedItem();
     String tenNguoiDung = (String) cbbGV.getSelectedItem();
     String tenMonHoc = (String) cbbMon.getSelectedItem();
     String tiet = jTextField3.getText().trim();
-    String maPhongHoc = (String) cbbPhong.getSelectedItem(); // Lấy mã phòng học
+    String maPhongHoc = (String) cbbPhong.getSelectedItem();
     String tenHocKy = (String) cbbHocKy.getSelectedItem();
     String ghichu = jTextArea1.getText().trim();
+    String nienKhoa = (String) cbbNamHoc.getSelectedItem();
 
     // Kiểm tra thông tin đầu vào
     if ("Chọn lớp".equals(tenLop) || "Chọn giáo viên".equals(tenNguoiDung) || 
         "Chọn môn học".equals(tenMonHoc) || tiet.isEmpty() || 
-        "Chọn mã phòng học".equals(maPhongHoc) || "Chọn học kỳ".equals(tenHocKy)) {
+        "Chọn phòng học".equals(maPhongHoc) || "Chọn học kỳ".equals(tenHocKy) ||
+        "Chọn niên khóa".equals(nienKhoa)) {
         JOptionPane.showMessageDialog(this, "Vui lòng điền đầy đủ thông tin!");
         return;
     }
-     // Kiểm tra số tiết hợp lệ
-        try {
-            int tietNum = Integer.parseInt(tiet);
-            if (tietNum < 1 || tietNum > 10) {
-                JOptionPane.showMessageDialog(this, "Số tiết phải từ 1 đến 10!");
-                return;
-            }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Số tiết phải là số nguyên hợp lệ!");
+
+    // Kiểm tra số tiết hợp lệ
+    try {
+        int tietNum = Integer.parseInt(tiet);
+        if (tietNum < 1 || tietNum > 10) {
+            JOptionPane.showMessageDialog(this, "Số tiết phải từ 1 đến 10!");
             return;
         }
-          // Kiểm tra ghi chú không chứa ký tự đặc biệt
-        if (!ghichu.matches("^[a-zA-Z0-9\\s\\.,]*$")) {
-            JOptionPane.showMessageDialog(this, "Ghi chú chỉ được chứa chữ cái, số, khoảng trắng, dấu chấm và dấu phẩy!");
-            return;
-        }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "Số tiết phải là số nguyên hợp lệ!");
+        return;
+    }
+
+    // Kiểm tra ghi chú không chứa ký tự đặc biệt
+    if (!ghichu.matches("^[a-zA-Z0-9\\s\\.,]*$")) {
+        JOptionPane.showMessageDialog(this, "Ghi chú chỉ được chứa chữ cái, số, khoảng trắng, dấu chấm và dấu phẩy!");
+        return;
+    }
 
     // Lấy ngày từ JDateChooser
     Date ngay = currentDateChooser != null ? currentDateChooser.getDate() : null;
     if (ngay == null) {
         JOptionPane.showMessageDialog(this, "Vui lòng chọn một ngày hợp lệ!");
+        return;
+    }
+
+    // Kiểm tra ngày có thuộc niên khóa không
+    String[] years = nienKhoa.split("-");
+    if (years.length != 2) {
+        JOptionPane.showMessageDialog(this, "Niên khóa không đúng định dạng!", "Lỗi niên khóa", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    try {
+        int startYear = Integer.parseInt(years[0]);
+        int endYear = Integer.parseInt(years[1]);
+
+        Calendar startDate = Calendar.getInstance();
+        startDate.set(startYear, Calendar.SEPTEMBER, 3, 0, 0, 0);
+        startDate.set(Calendar.MILLISECOND, 0);
+
+        Calendar endDate = Calendar.getInstance();
+        endDate.set(endYear, Calendar.MAY, 30, 23, 59, 59);
+        endDate.set(Calendar.MILLISECOND, 999);
+
+        Calendar selectedCal = Calendar.getInstance();
+        selectedCal.setTime(ngay);
+        selectedCal.set(Calendar.HOUR_OF_DAY, 0);
+        selectedCal.set(Calendar.MINUTE, 0);
+        selectedCal.set(Calendar.SECOND, 0);
+        selectedCal.set(Calendar.MILLISECOND, 0);
+
+        if (selectedCal.before(startDate) || selectedCal.after(endDate)) {
+            JOptionPane.showMessageDialog(this, 
+                "Ngày được chọn không thuộc niên khóa " + nienKhoa + "!\n" +
+                "Vui lòng chọn ngày từ 03/09/" + startYear + " đến 30/05/" + endYear, 
+                "Lỗi ngày", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "Niên khóa không hợp lệ!", "Lỗi niên khóa", JOptionPane.ERROR_MESSAGE);
         return;
     }
 
@@ -675,10 +774,10 @@ private void loadLopHocHoc() {
 
     thoiKhoaBieuDAO dao = new thoiKhoaBieuDAO();
     // Kiểm tra trùng lịch giáo viên
-        if (dao.isTeacherScheduleConflict(tenNguoiDung, ngayStr, tiet)) {
-            JOptionPane.showMessageDialog(this, "Giáo viên " + tenNguoiDung + " đã được phân công dạy tiết " + tiet + " vào ngày " + ngayStr + "!");
-            return;
-        }
+    if (dao.isTeacherScheduleConflict(tenNguoiDung, ngayStr, tiet)) {
+        JOptionPane.showMessageDialog(this, "Giáo viên " + tenNguoiDung + " đã được phân công dạy tiết " + tiet + " vào ngày " + ngayStr + "!");
+        return;
+    }
 
     String maTKB = dao.generateNewMaTKB();
 
@@ -687,6 +786,7 @@ private void loadLopHocHoc() {
     if (success) {
         JOptionPane.showMessageDialog(this, "Phân công tiết học thành công! Mã TKB: " + maTKB);
         loadTableData();
+        loadTableData2();
     } else {
         JOptionPane.showMessageDialog(this, "Lỗi khi phân công tiết học!");
     }
@@ -721,6 +821,10 @@ private void loadLopHocHoc() {
     // 3. Nạp lại toàn bộ dữ liệu lên table (như loadTableData2 ban đầu)
     loadTableData2();
     }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void cbbLopHocActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbbLopHocActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cbbLopHocActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

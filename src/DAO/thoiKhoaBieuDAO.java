@@ -72,12 +72,12 @@ public class thoiKhoaBieuDAO {
      
     public List<String> getAllLopHoc() {
         List<String> lopHocList = new ArrayList<>();
-        String sql = "SELECT TenLop FROM LopHoc";
+        String sql = "SELECT MaLop FROM LopHoc";
         try (Connection conn = Connect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
-                lopHocList.add(rs.getString("TenLop"));
+                lopHocList.add(rs.getString("MaLop"));
             }
         } catch (SQLException e) {
             System.err.println("Lỗi khi lấy danh sách lớp: " + e.getMessage());
@@ -395,29 +395,32 @@ public List<String> getAllMaPhongHoc() {
 //}
     
 public List<ThoiKhoaBieu> getAllThoiKhoaBieu() {
-    List<ThoiKhoaBieu> tkbList = new ArrayList<>();
-    String sql = "SELECT Ma_TKB, MaLop, Ten_nguoi_dung, MaMonHoc, Ngay, Tiet, Ma_Phong_hoc, MaHocKy, ghichu FROM ThoiKhoaBieu";
-    try (Connection conn = Connect.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
-        while (rs.next()) {
-            ThoiKhoaBieu tkb = new ThoiKhoaBieu();
-            tkb.setMaTKB(rs.getString("Ma_TKB"));
-            tkb.setTenLop(rs.getString("MaLop"));
-            tkb.setTenNguoiDung(rs.getString("Ten_nguoi_dung"));
-            tkb.setTenMonHoc(rs.getString("MaMonHoc"));
-            java.sql.Date sqlDate = rs.getDate("Ngay");
-            tkb.setNgay(sqlDate != null ? new Date(sqlDate.getTime()) : null); // Gán Date hoặc null
-            tkb.setTiet(rs.getString("Tiet"));
-            tkb.setMaPhongHoc(rs.getString("Ma_Phong_hoc"));
-            tkb.setTenHocKy(rs.getString("MaHocKy"));
-            tkbList.add(tkb);
+        List<ThoiKhoaBieu> tkbList = new ArrayList<>();
+        String sql = "SELECT tkb.Ma_TKB, lh.TenLop, tkb.Ten_nguoi_dung, tkb.MaMonHoc, tkb.Ngay, tkb.Tiet, tkb.Ma_Phong_hoc, tkb.MaHocKy, tkb.ghichu " +
+                     "FROM ThoiKhoaBieu tkb " +
+                     "JOIN LopHoc lh ON tkb.MaLop = lh.MaLop";
+        try (Connection conn = Connect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                ThoiKhoaBieu tkb = new ThoiKhoaBieu();
+                tkb.setMaTKB(rs.getString("Ma_TKB"));
+                tkb.setTenLop(rs.getString("TenLop"));
+                tkb.setTenNguoiDung(rs.getString("Ten_nguoi_dung"));
+                tkb.setTenMonHoc(rs.getString("MaMonHoc"));
+                java.sql.Date sqlDate = rs.getDate("Ngay");
+                tkb.setNgay(sqlDate != null ? new Date(sqlDate.getTime()) : null);
+                tkb.setTiet(rs.getString("Tiet"));
+                tkb.setMaPhongHoc(rs.getString("Ma_Phong_hoc"));
+                tkb.setTenHocKy(rs.getString("MaHocKy"));
+                tkb.setGhichu(rs.getString("ghichu"));
+                tkbList.add(tkb);
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi lấy danh sách thời khóa biểu: " + e.getMessage());
         }
-    } catch (SQLException e) {
-        System.err.println("Lỗi khi lấy danh sách thời khóa biểu: " + e.getMessage());
+        return tkbList;
     }
-    return tkbList;
-}
     public String getMaPhongHocByTenPhong(String tenPhongHoc) {
     String maPhongHoc = null;
     String sql = "SELECT Ma_Phong_hoc FROM PhongHoc WHERE TenPhonghoc = ?";

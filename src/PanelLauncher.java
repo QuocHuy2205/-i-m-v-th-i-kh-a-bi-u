@@ -52,8 +52,8 @@ public class PanelLauncher {
     // Ví dụ: khởi chạy form Quản Lý Giáo Viên
     javax.swing.SwingUtilities.invokeLater(() -> {
         // Tạo instance của panel bạn muốn hiển thị
-//        QuanLiThoiKhoaBieu panel = new QuanLiThoiKhoaBieu();
-          QuanLiThoiKhoaBieu panel = new QuanLiThoiKhoaBieu();
+        QuanLiThoiKhoaBieu panel = new QuanLiThoiKhoaBieu();
+//          QuanLiDiemVaHanhKiem panel = new QuanLiDiemVaHanhKiem();                                                  
         // Hiển thị với tiêu đề
         showPanel(panel, "Quản Lý Học Sinh");
     });
